@@ -1,0 +1,9 @@
+<phpunit
+    bootstrap="tests/bootstrap-tests.php"
+    beStrictAboutTestsThatDoNotTestAnything="false"
+    colors="true"
+>
+    <testsuite name="Backend Tests">
+        <directory suffix="Test.php">tests/Fangorn</directory>
+    </testsuite>
+</phpunit>
