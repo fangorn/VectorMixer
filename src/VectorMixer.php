@@ -20,22 +20,56 @@ class VectorMixer {
         $this->currentPattern   = $this->getFirstPattern();
     }
 
+    public function rewind(): void {
+        $this->currentPattern = $this->getFirstPattern();
+    }
+
+    public function valid(): bool {
+        return $this->currentPattern !== null;
+    }
+
+    public function next(): void {
+
+        if ($this->currentPattern !== '') {
+            $this->currentPattern = $this->getNextPattern();
+            return;
+        }
+
+        $this->currentPattern = null;
+    }
+
+    public function current(): array {
+        return $this->mixArraysByCurrentPattern();
+    }
+
     private function getFirstPattern(): string {
-        return $this->getPattern(0);
+        return str_repeat('0', count($this->recipient)) . str_repeat('1', count($this->donor));
     }
 
-    private function getNextPattern(): string {
-        $startSearchPosition = bindec($this->currentPattern) + 1;
-        return $this->getPattern($startSearchPosition);
+    private function addOneToBinaryNumber(string $binaryNumber): string {
+        $result = $binaryNumber;
+
+        $i = strlen($result) - 1;
+        while ($result[$i] === '1' && $i >= 0) {
+            $result[$i] = '0';
+            $i--;
+        }
+        $result[$i] = '1';
+
+        return $result;
     }
 
-    private function getPattern(int $startSearchPosition): string {
-
+    private function getNextPattern(): ?string {
         $patternLength      = count($this->recipient) + count($this->donor);
-        $maxPatternsCount   = pow(2, $patternLength);
+        $maxPattern = str_repeat('1', $patternLength);
+        $possiblePattern = $this->currentPattern;
 
-        for ($i = $startSearchPosition; $i < $maxPatternsCount; $i++) {
-            $possiblePattern = decbin($i);
+        while ($possiblePattern < $maxPattern) {
+
+            // TODO: оптимизировать
+            //$possiblePattern = decbin(bindec($possiblePattern) + 1);
+            $possiblePattern = $this->addOneToBinaryNumber($possiblePattern);
+
             if (substr_count($possiblePattern, '1') === count($this->donor)) {
                 while (strlen($possiblePattern) < $patternLength) {
                     $possiblePattern = '0' . $possiblePattern;
@@ -43,14 +77,10 @@ class VectorMixer {
                 return $possiblePattern;
             }
         }
-        return '';
+        return null;
     }
 
     private function mixArraysByCurrentPattern(): array {
-
-        if (empty($this->currentPattern)) {
-            return [];
-        }
 
         $donor      = $this->donor;
         $recipient  = $this->recipient;
@@ -59,28 +89,12 @@ class VectorMixer {
         for ($i = 0; $i < strlen($this->currentPattern); $i++) {
             $currentDigit = $this->currentPattern[$i];
             if ($currentDigit === '1') {
-                array_push($mixedArray, array_shift($donor));
+                $mixedArray[] = array_shift($donor);
             } else {
-                array_push($mixedArray, array_shift($recipient));
+                $mixedArray[] = array_shift($recipient);
             }
         }
         return $mixedArray;
-    }
-
-    public function rewind(): void {
-        $this->currentPattern = $this->getFirstPattern();
-    }
-
-    public function valid(): bool {
-        return $this->currentPattern !== '';
-    }
-
-    public function next(): void {
-        $this->currentPattern = $this->getNextPattern();
-    }
-
-    public function current(): array {
-        return $this->mixArraysByCurrentPattern();
     }
 }
 
