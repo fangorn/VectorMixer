@@ -31,7 +31,7 @@ class VectorMixer {
     public function next(): void {
 
         if ($this->currentPattern !== '') {
-            $this->currentPattern = $this->getNextPattern();
+            $this->getNextPattern();
             return;
         }
 
@@ -46,38 +46,40 @@ class VectorMixer {
         return str_repeat('0', count($this->recipient)) . str_repeat('1', count($this->donor));
     }
 
-    private function addOneToBinaryNumber(string $binaryNumber): string {
-        $result = $binaryNumber;
-
-        $i = strlen($result) - 1;
-        while ($result[$i] === '1' && $i >= 0) {
-            $result[$i] = '0';
-            $i--;
-        }
-        $result[$i] = '1';
-
+    private function swap(string $string, int $index1, int $index2) {
+        $result = $string;
+        $buffer = $result[$index1];
+        $result[$index1] = $result[$index2];
+        $result[$index2] = $buffer;
         return $result;
     }
 
-    private function getNextPattern(): ?string {
-        $patternLength      = count($this->recipient) + count($this->donor);
-        $maxPattern = str_repeat('1', $patternLength);
+    /**
+     * Алгоримт получения следующей перестановки с повторениями
+     */
+    private function getNextPattern(): void {
+
         $possiblePattern = $this->currentPattern;
 
-        while ($possiblePattern < $maxPattern) {
-
-            // TODO: оптимизировать
-            //$possiblePattern = decbin(bindec($possiblePattern) + 1);
-            $possiblePattern = $this->addOneToBinaryNumber($possiblePattern);
-
-            if (substr_count($possiblePattern, '1') === count($this->donor)) {
-                while (strlen($possiblePattern) < $patternLength) {
-                    $possiblePattern = '0' . $possiblePattern;
-                }
-                return $possiblePattern;
-            }
+        $j = strlen($possiblePattern) - 2;
+        while ($j !== -1 && $possiblePattern[$j] >= $possiblePattern[$j + 1]) {
+            $j--;
         }
-        return null;
+        if ($j === -1) {
+            $this->currentPattern = null;
+        }
+        $k = strlen($possiblePattern) - 1;
+        while ($possiblePattern[$j] >= $possiblePattern[$k]) {
+            $k--;
+        }
+
+        $possiblePattern = $this->swap($possiblePattern, $j, $k);
+        $l = $j + 1;
+        $r = strlen($possiblePattern) - 1;
+        while ($l < $r) {
+            $possiblePattern = $this->swap($possiblePattern, $l++, $r--);
+        }
+        $this->currentPattern = $possiblePattern;
     }
 
     private function mixArraysByCurrentPattern(): array {
@@ -97,4 +99,3 @@ class VectorMixer {
         return $mixedArray;
     }
 }
-
