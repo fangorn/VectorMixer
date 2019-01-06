@@ -59,11 +59,10 @@ class VectorMixerTest extends TestCase {
         ];
     }
 
-    public function testVectorMixetResultsCount() {
-        $arr1 = range(1, 10);
-        $arr2 = range(1, 10);
+    public function testVectorMixerResultsCount() {
+        $arr1 = range(1, 4);
+        $arr2 = range(1, 5);
         $mixer = new VectorMixer($arr1, $arr2);
-        $mixer->rewind();
         $countResults = 0;
 
         while ($mixer->valid()) {
@@ -71,7 +70,27 @@ class VectorMixerTest extends TestCase {
             $countResults++;
         }
 
-        $expectedCountResult = 184756; // = 20! / (10! * 10!)
-        assertEquals($expectedCountResult, $countResults);
+        $expectedCountResult = gmp_intval(gmp_fact(4 + 5)) / gmp_intval(gmp_mul(gmp_fact(4), gmp_fact(5))); // = (4 + 5)! / (4! * 5!)
+        assertSame(126, $expectedCountResult);
+
+        assertSame($expectedCountResult, $countResults);
+    }
+
+    public function testLargeArraysFirstResult() {
+        $arr1 = range(10000, 20000);
+        $arr2 = range(50000, 60000);
+
+        $mixer = new VectorMixer($arr1, $arr2);
+
+        $expectedResult = array_merge(range(10000, 20000), range(50000, 60000));
+        assertSame($expectedResult, $mixer->current());
+
+        $mixer->next();
+        $expectedResult = array_merge(range(10000, 19999), [50000], [20000], range(50001, 60000));
+        assertSame($expectedResult, $mixer->current());
+
+        $mixer->next();
+        $expectedResult = array_merge(range(10000, 19999), [50000, 50001], [20000], range(50002, 60000));
+        assertSame($expectedResult, $mixer->current());
     }
 }
