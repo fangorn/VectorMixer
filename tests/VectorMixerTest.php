@@ -1,30 +1,30 @@
 <?php
 
-namespace Fangorn;
+namespace VectorMixer;
 
 use PHPUnit\Framework\TestCase;
 
 class VectorMixerTest extends TestCase {
     /**
      * Проверка замешивателя векторов.
-     * @dataProvider arraysProvider()
+     * @dataProvider mixVectorsDataProvider()
      */
-    public function testVectorMixer(array $recipient, array $donor, array $expectedResult) {
+    public function testVectorMixer(array $recipient, array $donor, array $expectedResult): void {
         $mixer = new VectorMixer($recipient, $donor);
         $mixer->rewind();
         $elements = [];
         $expectedLength = count($recipient) + count($donor);
-        while ($mixer->valid()) {
+        while ($mixer->isValidPattern()) {
             $element = $mixer->current();
-            assertCount($expectedLength, $element);
+            self::assertCount($expectedLength, $element);
             $elements[] = $element;
             $mixer->next();
         }
         sort($elements);
-        assertEquals($expectedResult, array_values($elements));
+        self::assertEquals($expectedResult, array_values($elements));
     }
 
-    public function arraysProvider() {
+    public static function mixVectorsDataProvider(): array {
         return [
             [
                 'recipient'         => [],
@@ -59,38 +59,41 @@ class VectorMixerTest extends TestCase {
         ];
     }
 
-    public function testVectorMixerResultsCount() {
+    /**
+     * Проверим количество генерируемых вариантов.
+     */
+    public function testVectorMixerResultsCount(): void {
         $arr1 = range(1, 4);
         $arr2 = range(1, 5);
         $mixer = new VectorMixer($arr1, $arr2);
         $countResults = 0;
 
-        while ($mixer->valid()) {
+        while ($mixer->isValidPattern()) {
             $mixer->next();
             $countResults++;
         }
 
-        $expectedCountResult = gmp_intval(gmp_fact(4 + 5)) / gmp_intval(gmp_mul(gmp_fact(4), gmp_fact(5))); // = (4 + 5)! / (4! * 5!)
-        assertSame(126, $expectedCountResult);
-
-        assertSame($expectedCountResult, $countResults);
+        self::assertSame(126, $countResults); // 126 = (4 + 5)! / (4! * 5!)
     }
 
-    public function testLargeArraysFirstResult() {
+    /**
+     * Проверим несколько результатов замешивания с большими векторами.
+     */
+    public function testLargeArraysFirstResult(): void {
         $arr1 = range(10000, 20000);
         $arr2 = range(50000, 60000);
 
         $mixer = new VectorMixer($arr1, $arr2);
 
         $expectedResult = array_merge(range(10000, 20000), range(50000, 60000));
-        assertSame($expectedResult, $mixer->current());
+        self::assertSame($expectedResult, $mixer->current());
 
         $mixer->next();
         $expectedResult = array_merge(range(10000, 19999), [50000], [20000], range(50001, 60000));
-        assertSame($expectedResult, $mixer->current());
+        self::assertSame($expectedResult, $mixer->current());
 
         $mixer->next();
         $expectedResult = array_merge(range(10000, 19999), [50000, 50001], [20000], range(50002, 60000));
-        assertSame($expectedResult, $mixer->current());
+        self::assertSame($expectedResult, $mixer->current());
     }
 }
